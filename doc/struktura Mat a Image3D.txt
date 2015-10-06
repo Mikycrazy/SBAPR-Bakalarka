@@ -1,0 +1,27 @@
+Image3D(i3dlib):
+
+	Offset offset
+	Vector3d<size_t> size
+	Resolution resolution
+	std::valarray<VOXEL> data
+	std::map<std::string, std::string> description
+
+
+Mat(OpenCV):
+
+	int flags
+	int dims;
+	int rows, cols;
+	uchar* data;
+
+	const uchar* datastart;
+	const uchar* dataend;
+	const uchar* datalimit;
+
+	MatAllocator* allocator;
+	static MatAllocator* getStdAllocator();
+
+	UMatData* u;
+
+	MatSize size;
+	MatStep step;
