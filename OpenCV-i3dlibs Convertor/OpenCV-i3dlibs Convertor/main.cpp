@@ -2,6 +2,7 @@
 #include <i3d/image3d.h>
 #include <opencv2/core/core.hpp>
 #include <opencv2/highgui/highgui.hpp>
+#include "ObjectConvertor.h";
 
 using namespace cv;
 
@@ -31,9 +32,11 @@ Mat convertImage3DToMat(i3d::Image3d<i3d::RGB> img)
 int main()
 {
 	i3d::Image3d<i3d::RGB16> img("Test-Picture-10x10.png");
+	Mat image;
+	image = imread("Test-Picture-10x10.png", IMREAD_COLOR); // Read the file
 
-	/*Mat image;
-	image = imread("Test-Picture-10x10.png", IMREAD_COLOR); // Read the file*/
+	i3d::Image3d<i3d::RGB>* img2(MatToImage3D<i3d::RGB>(image));
+
 
 	Mat image2;
 

@@ -61,9 +61,10 @@ inline cv::Mat image3DToMat(const i3d::Image3d<i3d::RGB16> img)
 	//Returning new Mat object with data from img
 	return cv::Mat(img.GetSizeX(), img.GetSizeY(), CV_16UC3, array).clone();
 }
+
 //TODO
 template<typename VOXEL>
-inline i3d::Image3d<VOXEL> MatToImage3D(const cv::Mat img)
+inline i3d::Image3d<VOXEL>* MatToImage3D(const cv::Mat img) 
 {
 
 	switch (img.type())
@@ -76,15 +77,15 @@ inline i3d::Image3d<VOXEL> MatToImage3D(const cv::Mat img)
 
 			for (size_t i = 0; i < array->size(); i++)
 			{
-				array[i] = new i3d::RGB(data[i * 3], data[i * 3 + 1], data[i * 3 + 2]);
+				array[i] = i3d::RGB(data[i * 3], data[i * 3 + 1], data[i * 3 + 2]);
 			}
 
-			i3d::Image3d<i3d::RGB> image;
-			image.MakeRoom(s.width, s.height, 1);
+			i3d::Image3d<i3d::RGB>* image = new i3d::Image3d<i3d::RGB>();
+			image->MakeRoom(s.width, s.height, 1);
 
 			for (size_t i = 0; i < s.area(); i++)
 			{
-				image.SetVoxel(i, array[i]);
+				image->SetVoxel(i, array[i]);
 			}
 
 			return image;
@@ -92,13 +93,13 @@ inline i3d::Image3d<VOXEL> MatToImage3D(const cv::Mat img)
 		case CV_8UC1:
 		{
 			cv::Size s = img.size();
-			i3d::Image3d<i3d::GRAY8> image;
-			image.MakeRoom(s.width, s.height, 1);
+			i3d::Image3d<i3d::GRAY8>* image = new i3d::Image3d<i3d::GRAY8>();
+			image->MakeRoom(s.width, s.height, 1);
 			auto data = static_cast<unsigned char*>(img.data);
 
 			for (size_t i = 0; i < s.area(); i++)
 			{
-				image.SetVoxel(i, data[i]);
+				image->SetVoxel(i, data[i]);
 			}
 
 			return image;
@@ -111,3 +112,11 @@ inline i3d::Image3d<VOXEL> MatToImage3D(const cv::Mat img)
 
 	}
 }
+
+struct conversion_proxy {
+	cv::Mat img;
+	conversion_proxy(cv::Mat const &img) : img(img) { }
+	template<typename T> operator T() {
+		return MatToImage3D<T>(img);
+	}
+};
