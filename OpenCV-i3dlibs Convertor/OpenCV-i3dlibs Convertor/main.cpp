@@ -30,12 +30,12 @@ Mat convertImage3DToMat(i3d::Image3d<i3d::RGB> img)
 
 int main()
 {
-	i3d::Image3d<i3d::RGB> img("Test-Picture-10x10.png");
+	i3d::Image3d<i3d::RGB16> img("Test-Picture-10x10.png");
 
 	/*Mat image;
 	image = imread("Test-Picture-10x10.png", IMREAD_COLOR); // Read the file*/
 
-	Mat image2 = convertImage3DToMat(img);
+	Mat image2;
 
 
 	int a;

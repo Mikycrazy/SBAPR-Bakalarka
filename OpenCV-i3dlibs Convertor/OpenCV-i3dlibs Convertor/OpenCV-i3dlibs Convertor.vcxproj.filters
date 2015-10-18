@@ -20,7 +20,7 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="convertorOpencv3dlib.h">
+    <ClInclude Include="ObjectConvertor.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
