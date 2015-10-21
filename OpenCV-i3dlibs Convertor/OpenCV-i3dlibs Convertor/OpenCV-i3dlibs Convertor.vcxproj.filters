@@ -23,5 +23,8 @@
     <ClInclude Include="ObjectConvertor.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="Tests.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

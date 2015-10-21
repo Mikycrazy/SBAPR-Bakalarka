@@ -4,30 +4,31 @@
 #include <opencv2/core/core.hpp>
 #include <opencv2/highgui/highgui.hpp>
 
-inline cv::Mat image3DToMat(const i3d::Image3d<i3d::RGB> img)
+//Funkèní
+inline cv::Mat image3DToMat(const i3d::Image3d<i3d::RGB>* img)
 {
-	//Convertion data to uchar*
-	auto data = img.GetVoxelData();
-	auto array = new unsigned char(data.size() * 3);
+	//Convertion data from image3d to uchar*
+	auto data = img->GetVoxelData();
+	auto array = new unsigned char[data.size() * 3];
 
 
 	for (size_t i = 0; i < data.size(); i++)
 	{
-		array[i * 3] = data[i].red;
+		array[i * 3] = data[i].blue;
 		array[i * 3 + 1] = data[i].green;
-		array[i * 3 + 2] = data[i].blue;
+		array[i * 3 + 2] = data[i].red;
 	}
 
 	//Returning new Mat object with data from img
-	return cv::Mat(img.GetSizeX(), img.GetSizeY(), CV_8UC3, array).clone();
+	return cv::Mat(img->GetSizeX(), img->GetSizeY(), CV_8UC3, array).clone();
 }
 
-//TODO - otestovat
-inline cv::Mat image3DToMat(const i3d::Image3d<i3d::GRAY8> img)
+//Funkèní
+inline cv::Mat image3DToMat(const i3d::Image3d<i3d::GRAY8>* img)
 {
 	//Convertion data to uchar array
-	auto data = img.GetVoxelData();
-	auto array = new unsigned char(data.size());
+	auto data = img->GetVoxelData();
+	auto array = new unsigned char[data.size()];
 
 	for (size_t i = 0; i < data.size(); i++)
 	{
@@ -35,15 +36,55 @@ inline cv::Mat image3DToMat(const i3d::Image3d<i3d::GRAY8> img)
 	}
 
 	//Returning new Mat object with data from img
-	return cv::Mat(img.GetSizeX(), img.GetSizeY(), CV_8UC1, array).clone();
+	return cv::Mat(img->GetSizeX(), img->GetSizeY(), CV_8UC1, array).clone();
 }
 
-//TODO - otestovat
-inline cv::Mat image3DToMat(const i3d::Image3d<i3d::GRAY16> img)
+//Funkèní  WTF litle and big indian
+inline cv::Mat image3DToMat(const i3d::Image3d<i3d::GRAY16>* img)
 {
 	//Convertion data to ushort array
-	auto data = img.GetVoxelData();
-	auto array = new unsigned char(data.size());
+	auto data = img->GetVoxelData();
+	int a = data.size();
+	auto array = new unsigned short[a];
+
+	for (size_t i = 0; i < data.size(); i++)
+	{
+		//Swap Bites because each library works with them diferetly
+		unsigned short tmp = data[i];
+		unsigned short val = (tmp << 8) | (tmp >> 8);
+		array[i] = val;
+	}
+
+	//Returning new Mat object with data from img
+	return cv::Mat(img->GetSizeX(), img->GetSizeY(), CV_16UC1, array).clone();
+}
+
+//TODO - otestovat asi nefunkèní, neni image RGB16
+//Nefunèni
+inline cv::Mat image3DToMat(const i3d::Image3d<i3d::RGB16>* img)
+{
+	//Convertion data to uchar*
+	auto data = img->GetVoxelData();
+	auto array = new unsigned short[data.size() * 3];
+
+
+	for (size_t i = 0; i < data.size(); i++)
+	{
+		array[i * 3] = data[i].blue;
+		array[i * 3 + 1] = data[i].green;
+		array[i * 3 + 2] = data[i].red;
+	}
+
+	//Returning new Mat object with data from img
+	return cv::Mat(img->GetSizeX(), img->GetSizeY(), CV_16UC3, array).clone();
+}
+
+//Funkèní
+inline cv::Mat image3DToMat(const i3d::Image3d<float>* img)
+{
+	//Convertion data to ushort array
+	auto data = img->GetVoxelData();
+	auto array = new float[data.size()];
 
 	for (size_t i = 0; i < data.size(); i++)
 	{
@@ -51,28 +92,28 @@ inline cv::Mat image3DToMat(const i3d::Image3d<i3d::GRAY16> img)
 	}
 
 	//Returning new Mat object with data from img
-	return cv::Mat(img.GetSizeX(), img.GetSizeY(), CV_16UC1, array).clone();
+	return cv::Mat(img->GetSizeX(), img->GetSizeY(), CV_32FC1, array).clone();
 }
 
-//TODO - otestovat neni image
-inline cv::Mat image3DToMat(const i3d::Image3d<i3d::RGB16> img)
+//Funkèní
+inline cv::Mat image3DToMat(const i3d::Image3d<bool>* img)
 {
-	//Convertion data to uchar*
-	auto data = img.GetVoxelData();
-	auto array = new unsigned short(data.size() * 3);
-
+	//Convertion data to ushort array
+	auto data = img->GetVoxelData();
+	auto array = new bool[data.size()];
 
 	for (size_t i = 0; i < data.size(); i++)
 	{
-		array[i * 3] = data[i].red;
-		array[i * 3 + 1] = data[i].green;
-		array[i * 3 + 2] = data[i].blue;
+		array[i] = data[i];
 	}
 
 	//Returning new Mat object with data from img
-	return cv::Mat(img.GetSizeX(), img.GetSizeY(), CV_16UC3, array).clone();
+	return cv::Mat(img->GetSizeX(), img->GetSizeY(), CV_8UC1, array).clone();
 }
 
+
+
+//Funkèní
 inline i3d::Image3d<i3d::RGB>* MatToImage3D_RGB(const cv::Mat img)
 {
 	if (img.type() == CV_8UC3)
@@ -112,19 +153,18 @@ inline i3d::Image3d<i3d::RGB>* MatToImage3D_RGB(const cv::Mat img)
 	}
 }
 
-
+//Funkèní
 inline i3d::Image3d<i3d::GRAY8>* MatToImage3D_GRAY8(const cv::Mat img)
 {
 	if (img.type() == CV_8UC1)
 	{
 		cv::Size s = img.size();
-		i3d::Image3d<i3d::GRAY8>* image = new i3d::Image3d<i3d::GRAY8>();
+		auto image = new i3d::Image3d<i3d::GRAY8>();
 		image->MakeRoom(s.width, s.height, 1);
-		auto data = static_cast<unsigned char*>(img.data);
 
 		for (size_t i = 0; i < s.area(); i++)
 		{
-			image->SetVoxel(i, data[i]);
+			image->SetVoxel(i, img.data[i]);
 		}
 
 		return image;
@@ -136,6 +176,7 @@ inline i3d::Image3d<i3d::GRAY8>* MatToImage3D_GRAY8(const cv::Mat img)
 	}
 }
 
+//Funkèní
 inline i3d::Image3d<i3d::GRAY16>* MatToImage3D_GRAY16(const cv::Mat img)
 {
 	if (img.type() == CV_16UC1)
@@ -145,8 +186,14 @@ inline i3d::Image3d<i3d::GRAY16>* MatToImage3D_GRAY16(const cv::Mat img)
 		image->MakeRoom(s.width, s.height, 1);
 		auto data = reinterpret_cast<unsigned short*>(img.data);
 
+
+
 		for (size_t i = 0; i < s.area(); i++)
 		{
+			//WTF zeptat se why???just why???
+			unsigned short a = data[i];
+			unsigned short val = (a << 8) | (a >> 8);
+
 			image->SetVoxel(i, data[i]);
 		}
 
@@ -158,7 +205,8 @@ inline i3d::Image3d<i3d::GRAY16>* MatToImage3D_GRAY16(const cv::Mat img)
 		return nullptr;
 	}
 }
-//Zeptat se na RGB16
+
+//Zeptat se na RGB16 obrazky
 inline i3d::Image3d<i3d::RGB16>* MatToImage3D_RGB16(const cv::Mat img)
 {
 	if (img.type() == CV_16UC3)
@@ -178,9 +226,11 @@ inline i3d::Image3d<i3d::RGB16>* MatToImage3D_RGB16(const cv::Mat img)
 				short g = data[img.step * i + j * 3 + 1];
 				short r = data[img.step * i + j * 3 + 2];
 
-				int size = array->size();
+				short new_b = (b << 8) | (b >> 8);
+				short new_g = (g << 8) | (g >> 8);
+				short new_r = (r << 8) | (r >> 8);
 
-				array->push_back(i3d::RGB16(r, g, b));
+				array->push_back(i3d::RGB16(new_r, new_g, new_b));
 			}
 		}
 
@@ -198,6 +248,53 @@ inline i3d::Image3d<i3d::RGB16>* MatToImage3D_RGB16(const cv::Mat img)
 	}
 }
 
+//TODO - otestovat, zeptat se na reprezentaci obrazku
+inline i3d::Image3d<float>* MatToImage3D_FLOAT(const cv::Mat img)
+{
+	if (img.type() == CV_32FC1)
+	{
+		cv::Size s = img.size();
+		auto image = new i3d::Image3d<float>();
+		image->MakeRoom(s.width, s.height, 1);
+		auto data = reinterpret_cast<float*>(img.data);
+
+		for (size_t i = 0; i < s.area(); i++)
+		{
+			image->SetVoxel(i, data[i]);
+		}
+
+		return image;
+	}
+	else
+	{
+		std::cout << "cv::Mat image type not handled in switch:" << img.type() << std::endl;
+		return nullptr;
+	}
+}
+
+//Funkèní
+inline i3d::Image3d<bool>* MatToImage3D_BOOL(const cv::Mat img)
+{
+	if (img.type() == CV_8UC1)
+	{
+		cv::Size s = img.size();
+		auto image = new i3d::Image3d<bool>();
+		image->MakeRoom(s.width, s.height, 1);
+		auto data = reinterpret_cast<bool*>(img.data);
+
+		for (size_t i = 0; i < s.area(); i++)
+		{
+			image->SetVoxel(i, data[i]);
+		}
+
+		return image;
+	}
+	else
+	{
+		std::cout << "cv::Mat image type not handled in switch:" << img.type() << std::endl;
+		return nullptr;
+	}
+}
 /*
 //TODO
 template<typename VOXEL>
