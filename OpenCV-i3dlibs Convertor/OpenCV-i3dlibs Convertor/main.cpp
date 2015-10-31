@@ -11,7 +11,13 @@ using  namespace i3d;
 
 int main()
 {
-	TestBool_MatToImage3d();
+	//RunAllImage3DTests();
+	RunAllMatTests();
+
+	cv::Mat image2;
+	image2 = cv::imread("images/TIF/3D_RGB16.tif", CV_LOAD_IMAGE_UNCHANGED); // Read the file
+
+	std::cout << std::endl;
 
 	/*
 	auto im4 = LoadBoolImage("Test-Picture-10x10.png");

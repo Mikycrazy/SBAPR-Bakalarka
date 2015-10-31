@@ -4,6 +4,48 @@
 #include <opencv2/core/core.hpp>
 #include <opencv2/highgui/highgui.hpp>
 
+std::string getImageType(int number)
+{
+	// find type
+	int imgTypeInt = number % 8;
+	std::string imgTypeString;
+
+	switch (imgTypeInt)
+	{
+	case 0:
+		imgTypeString = "8U";
+		break;
+	case 1:
+		imgTypeString = "8S";
+		break;
+	case 2:
+		imgTypeString = "16U";
+		break;
+	case 3:
+		imgTypeString = "16S";
+		break;
+	case 4:
+		imgTypeString = "32S";
+		break;
+	case 5:
+		imgTypeString = "32F";
+		break;
+	case 6:
+		imgTypeString = "64F";
+		break;
+	default:
+		break;
+	}
+
+	// find channel
+	int channel = (number / 8) + 1;
+
+	std::stringstream type;
+	type << "CV_" << imgTypeString << "C" << channel;
+
+	return type.str();
+}
+
 //Funkèní
 inline cv::Mat image3DToMat(const i3d::Image3d<i3d::RGB>* img)
 {
@@ -59,8 +101,7 @@ inline cv::Mat image3DToMat(const i3d::Image3d<i3d::GRAY16>* img)
 	return cv::Mat(img->GetSizeX(), img->GetSizeY(), CV_16UC1, array).clone();
 }
 
-//TODO - otestovat asi nefunkèní, neni image RGB16
-//Nefunèni
+//Funkèní
 inline cv::Mat image3DToMat(const i3d::Image3d<i3d::RGB16>* img)
 {
 	//Convertion data to uchar*
@@ -70,9 +111,17 @@ inline cv::Mat image3DToMat(const i3d::Image3d<i3d::RGB16>* img)
 
 	for (size_t i = 0; i < data.size(); i++)
 	{
-		array[i * 3] = data[i].blue;
-		array[i * 3 + 1] = data[i].green;
-		array[i * 3 + 2] = data[i].red;
+		unsigned short tmp_b = data[i].blue;
+		unsigned short tmp_g = data[i].green;
+		unsigned short tmp_r = data[i].red;
+
+		unsigned short val_b = (tmp_b << 8) | (tmp_b >> 8);
+		unsigned short val_g = (tmp_g << 8) | (tmp_g >> 8);
+		unsigned short val_r = (tmp_r << 8) | (tmp_r >> 8);
+
+		array[i * 3] = val_b;
+		array[i * 3 + 1] = val_g;
+		array[i * 3 + 2] = val_r;
 	}
 
 	//Returning new Mat object with data from img
@@ -112,9 +161,15 @@ inline cv::Mat image3DToMat(const i3d::Image3d<bool>* img)
 }
 
 
+template <typename VOXEL>
+inline i3d::Image3d<VOXEL>* MatToImage3D(const cv::Mat img)
+{
+	return nullptr;
+}
 
 //Funkèní
-inline i3d::Image3d<i3d::RGB>* MatToImage3D_RGB(const cv::Mat img)
+template <>
+inline i3d::Image3d<i3d::RGB>* MatToImage3D<i3d::RGB>(const cv::Mat img)
 {
 	if (img.type() == CV_8UC3)
 	{
@@ -139,22 +194,27 @@ inline i3d::Image3d<i3d::RGB>* MatToImage3D_RGB(const cv::Mat img)
 		i3d::Image3d<i3d::RGB>* image = new i3d::Image3d<i3d::RGB>();
 		image->MakeRoom(s.width, s.height, 1);
 
+		i3d::RGB* p = image->GetFirstVoxelAddr();
 		for (size_t i = 0; i < s.area(); i++)
 		{
-			image->SetVoxel(i, array->at(i));
+			*p = array->at(i);
+			p++;
+			//image->SetVoxel(i, array->at(i));
 		}
 
 		return image;
 	}
 	else
 	{
-		std::cout << "cv::Mat image type not handled in switch:" << img.type() << std::endl;
+		std::cout << "cv::Mat image type " << img.type() << " with this type of convertion" << std::endl;
+		std::cout << "RBG type of convertion only works with CV_8UC3 type of images" << std::endl;
 		return nullptr;
 	}
 }
 
 //Funkèní
-inline i3d::Image3d<i3d::GRAY8>* MatToImage3D_GRAY8(const cv::Mat img)
+template <>
+inline i3d::Image3d<i3d::GRAY8>* MatToImage3D<i3d::GRAY8>(const cv::Mat img)
 {
 	if (img.type() == CV_8UC1)
 	{
@@ -171,13 +231,15 @@ inline i3d::Image3d<i3d::GRAY8>* MatToImage3D_GRAY8(const cv::Mat img)
 	}
 	else
 	{
-		std::cout << "cv::Mat image type not handled in switch:" << img.type() << std::endl;
+		std::cout << "cv::Mat image type " << img.type() << " with this type of convertion" << std::endl;
+		std::cout << "RBG type of convertion only works with CV_8UC1 type of images" << std::endl;
 		return nullptr;
 	}
 }
 
 //Funkèní
-inline i3d::Image3d<i3d::GRAY16>* MatToImage3D_GRAY16(const cv::Mat img)
+template <>
+inline i3d::Image3d<i3d::GRAY16>* MatToImage3D<i3d::GRAY16>(const cv::Mat img)
 {
 	if (img.type() == CV_16UC1)
 	{
@@ -187,27 +249,27 @@ inline i3d::Image3d<i3d::GRAY16>* MatToImage3D_GRAY16(const cv::Mat img)
 		auto data = reinterpret_cast<unsigned short*>(img.data);
 
 
-
 		for (size_t i = 0; i < s.area(); i++)
 		{
-			//WTF zeptat se why???just why???
 			unsigned short a = data[i];
 			unsigned short val = (a << 8) | (a >> 8);
 
-			image->SetVoxel(i, data[i]);
+			image->SetVoxel(i, val);
 		}
 
 		return image;
 	}
 	else
 	{
-		std::cout << "cv::Mat image type not handled in switch:" << img.type() << std::endl;
+		std::cout << "cv::Mat image type " << img.type() << " with this type of convertion" << std::endl;
+		std::cout << "RBG type of convertion only works with CV_16UC1 type of images" << std::endl;
 		return nullptr;
 	}
 }
 
 //Zeptat se na RGB16 obrazky
-inline i3d::Image3d<i3d::RGB16>* MatToImage3D_RGB16(const cv::Mat img)
+template <>
+inline i3d::Image3d<i3d::RGB16>* MatToImage3D<i3d::RGB16>(const cv::Mat img)
 {
 	if (img.type() == CV_16UC3)
 	{
@@ -222,34 +284,41 @@ inline i3d::Image3d<i3d::RGB16>* MatToImage3D_RGB16(const cv::Mat img)
 		{
 			for (int j = 0; j < img.cols; j++)
 			{
-				short b = data[img.step * i + j * 3];
-				short g = data[img.step * i + j * 3 + 1];
-				short r = data[img.step * i + j * 3 + 2];
 
-				short new_b = (b << 8) | (b >> 8);
-				short new_g = (g << 8) | (g >> 8);
-				short new_r = (r << 8) | (r >> 8);
+				unsigned short b = data[(img.step / 2) * i + j * 3];
+				unsigned short g = data[(img.step / 2) * i + j * 3 + 1];
+				unsigned short r = data[(img.step / 2) * i + j * 3 + 2];
 
-				array->push_back(i3d::RGB16(new_r, new_g, new_b));
+				unsigned short new_b = (b << 8) | (b >> 8);
+				unsigned short new_g = (g << 8) | (g >> 8);
+				unsigned short new_r = (r << 8) | (r >> 8);
+
+				array->push_back(i3d::RGB16(r, g, b));
 			}
 		}
 
+
+		i3d::RGB16* p = image->GetFirstVoxelAddr();
 		for (size_t i = 0; i < s.area(); i++)
 		{
-			image->SetVoxel(i, data[i]);
+			*p = array->at(i);
+			p++;
+			//image->SetVoxel(i, array->at(i));
 		}
 
 		return image;
 	}
 	else
 	{
-		std::cout << "cv::Mat image type not handled in switch:" << img.type() << std::endl;
+		std::cout << "cv::Mat image type " << getImageType(img.type()) << " with this type of convertion" << std::endl;
+		std::cout << "RBG type of convertion only works with CV_16UC3 type of images" << std::endl;
 		return nullptr;
 	}
 }
 
 //TODO - otestovat, zeptat se na reprezentaci obrazku
-inline i3d::Image3d<float>* MatToImage3D_FLOAT(const cv::Mat img)
+template <>
+inline i3d::Image3d<float>* MatToImage3D<float>(const cv::Mat img)
 {
 	if (img.type() == CV_32FC1)
 	{
@@ -267,13 +336,15 @@ inline i3d::Image3d<float>* MatToImage3D_FLOAT(const cv::Mat img)
 	}
 	else
 	{
-		std::cout << "cv::Mat image type not handled in switch:" << img.type() << std::endl;
+		std::cout << "cv::Mat image type " << img.type() << " with this type of convertion" << std::endl;
+		std::cout << "RBG type of convertion only works with CV_32FC1 type of images" << std::endl;
 		return nullptr;
 	}
 }
 
 //Funkèní
-inline i3d::Image3d<bool>* MatToImage3D_BOOL(const cv::Mat img)
+template <>
+inline i3d::Image3d<bool>* MatToImage3D<bool>(const cv::Mat img)
 {
 	if (img.type() == CV_8UC1)
 	{
@@ -291,67 +362,10 @@ inline i3d::Image3d<bool>* MatToImage3D_BOOL(const cv::Mat img)
 	}
 	else
 	{
-		std::cout << "cv::Mat image type not handled in switch:" << img.type() << std::endl;
+		std::cout << "cv::Mat image type " << img.type() << " with this type of convertion" << std::endl;
+		std::cout << "RBG type of convertion only works with CV_8UC1 type of images" << std::endl;
 		return nullptr;
 	}
 }
-/*
-//TODO
-template<typename VOXEL>
-inline i3d::Image3d<VOXEL>* MatToImage3D(const cv::Mat img) 
-{
 
-	switch (img.type())
-	{
-		case CV_8UC3:
-		{
-			cv::Size s = img.size();
-			auto data = static_cast<unsigned char*>(img.data);
-			auto array = new std::valarray<i3d::RGB>(s.area() / 3);
-
-			for (size_t i = 0; i < array->size(); i++)
-			{
-				array[i] = i3d::RGB(data[i * 3], data[i * 3 + 1], data[i * 3 + 2]);
-			}
-
-			i3d::Image3d<i3d::RGB>* image = new i3d::Image3d<i3d::RGB>();
-			image->MakeRoom(s.width, s.height, 1);
-
-			for (size_t i = 0; i < s.area(); i++)
-			{
-				image->SetVoxel(i, array[i]);
-			}
-
-			return image;
-		}
-		case CV_8UC1:
-		{
-			cv::Size s = img.size();
-			i3d::Image3d<i3d::GRAY8>* image = new i3d::Image3d<i3d::GRAY8>();
-			image->MakeRoom(s.width, s.height, 1);
-			auto data = static_cast<unsigned char*>(img.data);
-
-			for (size_t i = 0; i < s.area(); i++)
-			{
-				image->SetVoxel(i, data[i]);
-			}
-
-			return image;
-		}
-		default:
-		{
-			std::cout << "cv::Mat image type not handled in switch:" << img.type() << std::endl;
-			return nullptr;
-		}
-
-	}
-}
-
-struct conversion_proxy {
-	cv::Mat img;
-	conversion_proxy(cv::Mat const &img) : img(img) { }
-	template<typename T> operator T() {
-		return MatToImage3D<T>(img);
-	}
-};*/
 
