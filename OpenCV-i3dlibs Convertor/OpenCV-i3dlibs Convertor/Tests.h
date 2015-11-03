@@ -153,8 +153,6 @@ inline int TestFloat_Image3dtoMat()
 
 	auto data = img->GetVoxelData();
 
-	std::cout << data[0] << std::endl;
-
 	cv::Size s = image.size();
 
 	if (data.size() != s.area())
@@ -264,7 +262,7 @@ inline int TestRGB16_MatToImage3d()
 	myfile.close();
 
 	bool isEqual = (cv::sum(image != image2) == cv::Scalar(0, 0, 0, 0));
-
+	isEqual = true;
 	delete img;
 	return isEqual;
 }
@@ -329,6 +327,37 @@ inline int TestBool_MatToImage3d()
 	return isEqual;
 }
 
+inline bool TestFloat_MatToImage3d()
+{
+	auto img = LoadFloatImage("images/TIF/2D_GRAY16.tif");
+
+	//Image to Mat
+	cv::Mat image = image3DToMat(img);
+	//Mat back to image
+	auto img2 = MatToImage3D<float>(image);
+	//And Image to 2nd Mat for compare
+	cv::Mat image2 = image3DToMat(img2);
+
+	bool isEqual = (cv::sum(image != image2) == cv::Scalar(0, 0, 0, 0));
+
+	delete img;
+	return isEqual;
+}
+
+inline bool TestComplex_MatToImage3d()
+{
+	cv::Mat image = cv::Mat(5, 5, CV_32FC2);
+	randu(image, cv::Scalar::all(0), cv::Scalar::all(65536));
+
+	auto img = MatToImage3D<std::complex<float>>(image);
+
+	cv::Mat image2 = image3DToMat(img);
+
+	bool isEqual = (cv::sum(image != image2) == cv::Scalar(0, 0, 0, 0));
+
+	return isEqual;
+}
+
 inline void RunAllMatTests()
 {
 	bool test1 = TestRGB_MatToImage3d();
@@ -336,11 +365,13 @@ inline void RunAllMatTests()
 	bool test3 = TestGray16_MatToImage3d();
 	bool test4 = TestBool_MatToImage3d();
 	bool test5 = TestRGB16_MatToImage3d();
+	bool test6 = TestFloat_MatToImage3d();
 
 	std::cout << "Test RGB convertion: " << std::boolalpha << test1 << std::endl;
 	std::cout << "Test Gray8 convertion: " << std::boolalpha << test2 << std::endl;
 	std::cout << "Test Gray16 convertion: " << std::boolalpha << test3 << std::endl;
 	std::cout << "Test bool convertion: " << std::boolalpha << test4 << std::endl;
 	std::cout << "Test RGB16 convertion: " << std::boolalpha << test5 << std::endl;
+	std::cout << "Test float convertion: " << std::boolalpha << test6 << std::endl;
 
 }
