@@ -141,7 +141,6 @@ inline int TestGray16_Image3dtoMat()
 	return 1;
 }
 
-//Øeknìme že to je funkèní.
 inline int TestFloat_Image3dtoMat()
 {
 	auto img = LoadFloatImage("Test-Picture-10x10-Gray16.png");

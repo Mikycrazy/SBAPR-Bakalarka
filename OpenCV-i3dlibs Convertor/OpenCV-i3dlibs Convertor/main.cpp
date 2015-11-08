@@ -8,13 +8,28 @@
 using namespace cv;
 using  namespace i3d;
 
+/**
+@mainpage
 
+	Convertor Image3D and Mat 
+
+	Library i3dlibs and OpenCV provides a representation of 1D and 2D images. <br/>
+	For Eazy work with them at same time sometimes is needed convertion between them. <br/>
+	And that is pourpous of this module for i3dlib.
+
+	This module converts images created in OpenCv and converts them into Image3D and vice versa.
+
+	For this is here created one header file \ref ObjectConvertor.h.
+
+*/
+
+#ifndef DOXYGEN_SHOULD_SKIP_THIS
 int main()
 {
-	//RunAllImage3DTests();
-	RunAllMatTests();
+	RunAllImage3DTests();
+	//RunAllMatTests();
 
-	TestComplex_MatToImage3d();
+	//TestComplex_MatToImage3d();
 
 	/*
 	auto im4 = LoadBoolImage("Test-Picture-10x10.png");
@@ -71,3 +86,5 @@ int main()
 
 	return 0;
 }
+
+#endif
