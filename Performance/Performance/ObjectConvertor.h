@@ -121,6 +121,11 @@ std::string getImageType(int number)
 }
 
 
+//TODO: Pro 3d obrazky vybrat vrstvu. OK
+//Komentaøe
+//Licence & Copyright
+//Zminit resolution
+
 /**
 * \brief Method for convertion Image3D structure to Mat struture (i3d -> opencv).
 *
@@ -493,8 +498,6 @@ inline i3d::Image3d<i3d::RGB>* MatToImage3D<i3d::RGB>(const cv::Mat img)
 
 		i3d::Image3d<i3d::RGB>* image = new i3d::Image3d<i3d::RGB>();
 		image->MakeRoom(s.width, s.height, 1);
-		image->SetResolution(Resolution(1.0, 1.0, 0.0));
-		image->SetOffset(0);
 
 		i3d::RGB* p = image->GetFirstVoxelAddr();
 		for (size_t i = 0; i < s.area(); i++)
@@ -502,9 +505,6 @@ inline i3d::Image3d<i3d::RGB>* MatToImage3D<i3d::RGB>(const cv::Mat img)
 			*p = array->at(i);
 			p++;
 		}
-
-		delete array;
-
 		return image;
 	}
 	else
@@ -536,8 +536,6 @@ inline i3d::Image3d<i3d::GRAY8>* MatToImage3D<i3d::GRAY8>(const cv::Mat img)
 		cv::Size s = img.size();
 		auto image = new i3d::Image3d<i3d::GRAY8>();
 		image->MakeRoom(s.width, s.height, 1);
-		image->SetResolution(Resolution(1.0, 1.0, 0.0));
-		image->SetOffset(0);
 
 		i3d::GRAY8* p = image->GetFirstVoxelAddr();
 		for (size_t i = 0; i < s.area(); i++)
@@ -545,7 +543,6 @@ inline i3d::Image3d<i3d::GRAY8>* MatToImage3D<i3d::GRAY8>(const cv::Mat img)
 			*p = img.data[i];
 			p++;
 		}
-
 		return image;
 	}
 	else
@@ -577,9 +574,6 @@ inline i3d::Image3d<i3d::GRAY16>* MatToImage3D<i3d::GRAY16>(const cv::Mat img)
 		cv::Size s = img.size();
 		i3d::Image3d<i3d::GRAY16>* image = new i3d::Image3d<i3d::GRAY16>();
 		image->MakeRoom(s.width, s.height, 1);
-		image->SetResolution(Resolution(1.0, 1.0, 0.0));
-		image->SetOffset(0);
-
 		auto data = reinterpret_cast<unsigned short*>(img.data);
 
 		i3d::GRAY16* p = image->GetFirstVoxelAddr();
@@ -621,13 +615,11 @@ inline i3d::Image3d<i3d::RGB16>* MatToImage3D<i3d::RGB16>(const cv::Mat img)
 	if (img.type() == CV_16UC3)
 	{
 		cv::Size s = img.size();
-		auto array = new std::vector<i3d::RGB16>();
 		i3d::Image3d<i3d::RGB16>* image = new i3d::Image3d<i3d::RGB16>();
 		image->MakeRoom(s.width, s.height, 1);
-		image->SetResolution(Resolution(1.0, 1.0, 0.0));
-		image->SetOffset(0);
-
 		auto data = reinterpret_cast<unsigned short*>(img.data);
+
+		auto array = new std::vector<i3d::RGB16>();
 
 		for (int i = 0; i < img.rows; i++)
 		{
@@ -654,8 +646,6 @@ inline i3d::Image3d<i3d::RGB16>* MatToImage3D<i3d::RGB16>(const cv::Mat img)
 			p++;
 			//image->SetVoxel(i, array->at(i));
 		}
-
-		delete array;
 
 		return image;
 	}
@@ -688,9 +678,6 @@ inline i3d::Image3d<float>* MatToImage3D<float>(const cv::Mat img)
 		cv::Size s = img.size();
 		auto image = new i3d::Image3d<float>();
 		image->MakeRoom(s.width, s.height, 1);
-		image->SetResolution(Resolution(1.0, 1.0, 0.0));
-		image->SetOffset(0);
-
 		auto data = reinterpret_cast<float*>(img.data);
 
 		float* p = image->GetFirstVoxelAddr();
@@ -731,9 +718,6 @@ inline i3d::Image3d<bool>* MatToImage3D<bool>(const cv::Mat img)
 		cv::Size s = img.size();
 		auto image = new i3d::Image3d<bool>();
 		image->MakeRoom(s.width, s.height, 1);
-		image->SetResolution(Resolution(1.0, 1.0, 0.0));
-		image->SetOffset(0);
-
 		auto data = reinterpret_cast<bool*>(img.data);
 
 		bool* p = image->GetFirstVoxelAddr();
@@ -773,10 +757,8 @@ inline i3d::Image3d<std::complex<float>>* MatToImage3D<std::complex<float>>(cons
 	{
 		cv::Size s = img.size();
 		auto image = new i3d::Image3d<std::complex<float>>();
-		image->MakeRoom(s.width, s.height, 1);
-		image->SetResolution(Resolution(1.0, 1.0, 0.0));
-		image->SetOffset(0);
 
+		image->MakeRoom(s.width, s.height, 1);
 		auto data = reinterpret_cast<float*>(img.data);
 
 		auto array = new std::vector<std::complex<float>>();
@@ -799,8 +781,6 @@ inline i3d::Image3d<std::complex<float>>* MatToImage3D<std::complex<float>>(cons
 			p++;
 		}
 
-
-		delete array;
 		return image;
 	}
 	else
@@ -830,12 +810,9 @@ inline i3d::Image3d<std::complex<double>>* MatToImage3D<std::complex<double>>(co
 	if (img.type() == CV_64FC2)
 	{
 		cv::Size s = img.size();
-
 		auto image = new i3d::Image3d<std::complex<double>>();
-		image->MakeRoom(s.width, s.height, 1);
-		image->SetResolution(Resolution(1.0, 1.0, 0.0));
-		image->SetOffset(0);
 
+		image->MakeRoom(s.width, s.height, 1);
 		auto data = reinterpret_cast<double*>(img.data);
 
 		auto array = new std::vector<std::complex<double>>();
@@ -858,7 +835,6 @@ inline i3d::Image3d<std::complex<double>>* MatToImage3D<std::complex<double>>(co
 			p++;
 		}
 
-		delete array;
 		return image;
 	}
 	else

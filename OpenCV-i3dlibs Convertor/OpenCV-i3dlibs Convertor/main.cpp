@@ -26,8 +26,10 @@ using  namespace i3d;
 #ifndef DOXYGEN_SHOULD_SKIP_THIS
 int main()
 {
+
+
 	RunAllImage3DTests();
-	//RunAllMatTests();
+	RunAllMatTests();
 
 	//TestComplex_MatToImage3d();
 
