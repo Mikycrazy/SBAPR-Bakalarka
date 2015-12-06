@@ -146,9 +146,12 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="BorderIndices.cpp" />
     <ClCompile Include="Source.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="BorderIndices.h" />
+    <ClInclude Include="myGaussFIR.h" />
     <ClInclude Include="myTime.h" />
     <ClInclude Include="ObjectConvertor.h" />
   </ItemGroup>

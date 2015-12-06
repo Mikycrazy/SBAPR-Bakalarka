@@ -1,5 +1,6 @@
 #include <i3d/image3d.h>
 #include <i3d/filters.h>
+#include <i3d/metrics.h>
 #include <opencv2/imgproc/imgproc.hpp>
 #include <opencv2/opencv.hpp>
 #include <opencv2/highgui/highgui_c.h>
@@ -10,17 +11,22 @@
 
 #include "myTime.h"
 #include "ObjectConvertor.h"
+#include "myGaussFIR.h"
+
+#define INTERATION 100
 
 using namespace cv;
 using namespace i3d;
 
+
+
 const int COUNT = 4;
 
-double runOpenCV(Mat& src, Mat& dst, float sigma, int iterations = 100);
-double runOpenCV2(Mat& src, Mat& dst, float sigma, int iterations = 100);
+double runOpenCV(Mat& src, Mat& dst, float sigma, int iterations = INTERATION);
+double runOpenCV2(Mat& src, Mat& dst, float sigma, int iterations = INTERATION);
 
-double runi3DlibsTest1(Image3d<float> &src, Image3d<float> &out, float sigma, int iterations = 100);
-double runi3DlibsTest2(Image3d<float> & img, float sigma, int iterations = 100);
+double runi3DlibsTest1(Image3d<float> &src, Image3d<float> &out, float sigma, int iterations = INTERATION);
+double runi3DlibsTest2(Image3d<float> & img, float sigma, int iterations = INTERATION);
 
 int main(int argc, char** argv)
 {
@@ -44,6 +50,9 @@ int main(int argc, char** argv)
 	std::ofstream i3dfile;
 	i3dfile.open("i3d_results.csv");
 	i3dfile << "Knihovna;Cesta;Sigma;GaussFIR;GaussIIR" << std::endl;
+
+	std::ofstream files;
+	files.open("../Images/outputFilesList.txt");
 
 	for (auto iter = list.begin(); iter != list.end(); iter++)
 	{
@@ -86,39 +95,42 @@ int main(int argc, char** argv)
 			time_cv_1 = runOpenCV(image, dst, SIGMAS[i]);
 			time_cv_2 = runOpenCV2(image, dst2, SIGMAS[i]);
 
-			std::cout << "i3dLibs GaussFIR		: " << time_3d_1 << " ms" << std::endl;
-			std::cout << "i3dLibs GaussIIR		: " << time_3d_2 << " ms" << std::endl;
+			std::cout << "i3dLibs GaussFIR	: " << time_3d_1 << " ms" << std::endl;
+			std::cout << "i3dLibs GaussIIR	: " << time_3d_2 << " ms" << std::endl;
 			std::cout << "OpenCV filter2D		: " << time_cv_1 << " ms" << std::endl;
 			std::cout << "OpenCV GaussianBlur	: " << time_cv_2 << " ms" << std::endl;
 
 
 			cvfile << "opencv;" << *iter << ";" << SIGMAS[i] << ";" << time_cv_1 << ";" << time_cv_2 << std::endl;
 			i3dfile << "i3dlib;" << *iter << ";" << SIGMAS[i] << ";" << time_3d_1 << ";" << time_3d_2 << std::endl;
-
-			/*
+			
+			
 			for (size_t i = 0; i < size.width; i++)
 			{
 				std::cout << image.at<float>(0, i) << " x " << dst.at<float>(0, i) << " x " << dst2.at<float>(0, i) << std::endl;
-				std::cout << img->GetVoxelData()[i] << " x " << img2.GetVoxelData()[i] << " x " << img3.GetVoxelData()[i] << std::endl;
+				std::cout << img->GetVoxel(0, i, 0) << " x " << img2.GetVoxel(0, i, 0) << " x " << img3.GetVoxel(0, i, 0) << std::endl;
 			}
 			
-			std::string str = (*iter);
-			str.insert(str.end() - 4, 1 ,'_');
-			str.insert(str.length() - 4, std::to_string(SIGMAS[i]), 0 , 3);
-			str.insert(str.end() - 4, 1, '_');
-
-			std::string str_cv = str;
-			std::string str_i3d = str;
 
 
-			str_cv.insert(str_cv.length() - 4, "CV");
-			str_i3d.insert(str_i3d.length() - 4, "I3D");
+			std::string str = (*iter).substr((*iter).find_last_of('/'));
+
+			std::string str_cv = "../Images/out/opencv/";
+			str_cv.append(std::to_string(SIGMAS[i]), 0, 3);
+			str_cv.append(str);
+
+			std::string str_i3d = "../Images/out/i3dlib/";
+			str_i3d.append(std::to_string(SIGMAS[i]), 0, 3);
+			str_i3d.append(str);
+
+			files << str_cv << std::endl;
+			files << str_i3d << std::endl;
 
 			Image3d<float>* img_out;
 			img_out = MatToImage3D<float>(dst);
 
 			img2.SaveImage(str_i3d.c_str());
-			img_out->SaveImage(str_cv.c_str());*/
+			img_out->SaveImage(str_cv.c_str());
 			
 		}
 
@@ -126,6 +138,7 @@ int main(int argc, char** argv)
 
 	cvfile.close();
 	i3dfile.close();
+	files.close();
 }
 
 
@@ -145,17 +158,18 @@ double runOpenCV(Mat& src, Mat& dst, float sigma, int iterations)
 	anchor = Point(-1, -1);
 	delta = 0;
 	ddepth = -1;
-	kernel_size = 3;
+	kernel_size = sigma * 6;
+	kernel_size |= 1;
 
 	kernel = getGaussianKernel(kernel_size, sigma);
 
-	filter2D(src, dummy, ddepth, kernel, anchor, delta, BORDER_DEFAULT);
+	filter2D(src, dummy, ddepth, kernel, anchor, delta, BORDER_REPLICATE);
 
 	gettimeofday(&t1, NULL);
 	for (int i = 0; i < iterations; i++)
 	{
 		/// Apply filter
-		filter2D(src, dst, ddepth, kernel, anchor, delta, BORDER_DEFAULT);
+		filter2D(src, dst, ddepth, kernel, anchor, delta, BORDER_REPLICATE);
 	}
 	gettimeofday(&t2, NULL);
 
@@ -175,7 +189,7 @@ double runOpenCV2(Mat& src, Mat& dst, float sigma, int iterations)
 
 	gettimeofday(&t1, NULL);
 	for (int i = 0; i < iterations; i++) {
-		GaussianBlur(src, dst, Size(3, 3), sigma, 0);
+		GaussianBlur(src, dst, Size(0, 0), sigma, 0);
 	}
 	gettimeofday(&t2, NULL);
 
@@ -189,7 +203,7 @@ double runi3DlibsTest1(Image3d<float> &src, Image3d<float> &out, float sigma, in
 {
 
 	Image3d<float> img_dummy = src;
-
+	
 	timeval t1, t2;
 
 	GaussFIR<float>(src, img_dummy, sigma);
@@ -197,7 +211,7 @@ double runi3DlibsTest1(Image3d<float> &src, Image3d<float> &out, float sigma, in
 	gettimeofday(&t1, NULL);
 	for (int i = 0; i < iterations; i++)
 	{
-		GaussFIR<float>(src, out, sigma);
+		GaussFIR_repeatBoundary<float>(src, out, sigma, 3);
 	}
 	gettimeofday(&t2, NULL);
 
